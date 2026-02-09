@@ -435,11 +435,12 @@ def test_cpm():
     assert project_duration >= 0, "Czas projektu nie może być ujemny"
     
     # ES powinno być <= LS dla każdego zadania
+    EPSILON = 1e-6
     for i in range(n):
-        assert es[i] <= ls[i] + 1e-6, f"ES[{i}] > LS[{i}]"
+        assert es[i] <= ls[i] + EPSILON, f"ES[{i}] > LS[{i}]"
     
     # Ścieżka krytyczna to zadania gdzie ES == LS
-    critical_tasks = [i for i in range(n) if abs(es[i] - ls[i]) < 1e-6]
+    critical_tasks = [i for i in range(n) if abs(es[i] - ls[i]) < EPSILON]
     print(f"Zadania krytyczne: {critical_tasks}")
     
     print("✓ CPM: PASSED")
@@ -478,7 +479,7 @@ def test_floyd_warshall():
             for k in range(n):
                 if distances[i][k] != inf and distances[k][j] != inf:
                     assert distances[i][j] <= distances[i][k] + distances[k][j], \
-                        f"Nierówność trójkąta naruszona dla {i},{j},{k}"
+                        f"Nierówność trójkąta naruszona dla {i},{j},{k}: {distances[i][j]} > {distances[i][k]} + {distances[k][j]}"
     
     print("✓ Floyd-Warshall: PASSED")
 
@@ -524,6 +525,16 @@ def test_bipartite_matching():
     
     print(f"\nGraf K_{{2,3}}: rozmiar skojarzenia = {size}")
     assert size == 2, "W K_{2,3} maksymalne skojarzenie powinno mieć rozmiar 2"
+    
+    # Sprawdź poprawność skojarzenia
+    used_x = set()
+    used_y = set()
+    for u, v in matching:
+        assert u not in used_x, f"Wierzchołek X {u} użyty więcej niż raz"
+        assert v not in used_y, f"Wierzchołek Y {v} użyty więcej niż raz"
+        assert (u, v) in edges, f"Krawędź ({u}, {v}) nie istnieje w grafie"
+        used_x.add(u)
+        used_y.add(v)
     
     print("✓ Bipartite Matching: PASSED")
 

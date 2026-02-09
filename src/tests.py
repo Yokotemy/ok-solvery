@@ -10,7 +10,8 @@ from solvers import (
     mcnaughton, knapsack_dp, mst_kruskal, huffman,
     weighted_late_jobs, moore_hodgson, list_scheduling,
     schrage, schrage_pmtn, carlier, brown_algorithm,
-    Dinic, flow_with_bounds
+    Dinic, flow_with_bounds, cpm, floyd_warshall,
+    bipartite_matching_labeling
 )
 
 def test_mcnaughton():
@@ -412,6 +413,132 @@ def test_circulation_lower_bounds():
     print("✓ Circulation with Lower Bounds: PASSED")
 
 
+def test_cpm():
+    """Test metody ścieżki krytycznej (CPM)"""
+    print("\n=== TEST: Critical Path Method (CPM) ===")
+    
+    # Test: Przykład projektu z 6 zadaniami
+    n = 6  # wierzchołki 0..5
+    durations = [3, 2, 4, 1, 5, 2]  # czas trwania dla każdego wierzchołka
+    edges = [(0, 1), (0, 2), (1, 3), (2, 3), (2, 4), (3, 5), (4, 5)]
+    
+    es, ls, project_duration = cpm(n, durations, edges)
+    
+    print(f"Liczba zadań: {n}")
+    print(f"Czasy trwania: {durations}")
+    print(f"Krawędzie: {edges}")
+    print(f"Czas trwania projektu: {project_duration}")
+    print(f"ES (Earliest Start): {es}")
+    print(f"LS (Latest Start): {ls}")
+    
+    # Czas projektu powinien być >= 0
+    assert project_duration >= 0, "Czas projektu nie może być ujemny"
+    
+    # ES powinno być <= LS dla każdego zadania
+    EPSILON = 1e-6
+    for i in range(n):
+        assert es[i] <= ls[i] + EPSILON, f"ES[{i}] > LS[{i}]"
+    
+    # Ścieżka krytyczna to zadania gdzie ES == LS
+    critical_tasks = [i for i in range(n) if abs(es[i] - ls[i]) < EPSILON]
+    print(f"Zadania krytyczne: {critical_tasks}")
+    
+    print("✓ CPM: PASSED")
+
+
+def test_floyd_warshall():
+    """Test algorytmu Floyda-Warshalla"""
+    print("\n=== TEST: Floyd-Warshall All Pairs Shortest Paths ===")
+    
+    # Test: Graf z wykładu
+    n = 4
+    inf = float('inf')
+    
+    # Macierz sąsiedztwa (wagi krawędzi)
+    adj_matrix = [
+        [0, 3, inf, 7],
+        [8, 0, 2, inf],
+        [5, inf, 0, 1],
+        [2, inf, inf, 0]
+    ]
+    
+    distances = floyd_warshall(n, adj_matrix)
+    
+    print(f"Graf: {n} wierzchołków")
+    print(f"Macierz odległości:")
+    for row in distances:
+        print(row)
+    
+    # Sprawdź podstawowe własności
+    for i in range(n):
+        assert distances[i][i] == 0, f"Odległość z {i} do {i} powinna być 0"
+    
+    # Sprawdź symetrię trójkąta
+    for i in range(n):
+        for j in range(n):
+            for k in range(n):
+                if distances[i][k] != inf and distances[k][j] != inf:
+                    assert distances[i][j] <= distances[i][k] + distances[k][j], \
+                        f"Nierówność trójkąta naruszona dla {i},{j},{k}: {distances[i][j]} > {distances[i][k]} + {distances[k][j]}"
+    
+    print("✓ Floyd-Warshall: PASSED")
+
+
+def test_bipartite_matching():
+    """Test skojarzeń w grafach dwudzielnych"""
+    print("\n=== TEST: Bipartite Matching ===")
+    
+    # Test 1: Prosty graf dwudzielny
+    # X = {0, 1, 2}, Y = {0, 1, 2}
+    # Krawędzie: (0,0), (0,1), (1,1), (1,2), (2,2)
+    n_x = 3
+    n_y = 3
+    edges = [(0, 0), (0, 1), (1, 1), (1, 2), (2, 2)]
+    
+    size, matching = bipartite_matching_labeling(n_x, n_y, edges)
+    
+    print(f"X: {n_x} wierzchołków, Y: {n_y} wierzchołków")
+    print(f"Krawędzie: {edges}")
+    print(f"Rozmiar skojarzenia: {size}")
+    print(f"Skojarzenie: {matching}")
+    
+    # Sprawdź czy rozmiar jest poprawny
+    assert size == len(matching), "Rozmiar nie zgadza się z liczbą par"
+    assert size <= min(n_x, n_y), "Rozmiar przekracza możliwy maksimum"
+    
+    # Sprawdź czy skojarzenie jest poprawne (każdy wierzchołek max raz)
+    used_x = set()
+    used_y = set()
+    for u, v in matching:
+        assert u not in used_x, f"Wierzchołek X {u} użyty więcej niż raz"
+        assert v not in used_y, f"Wierzchołek Y {v} użyty więcej niż raz"
+        assert (u, v) in edges, f"Krawędź ({u}, {v}) nie istnieje w grafie"
+        used_x.add(u)
+        used_y.add(v)
+    
+    # Test 2: Graf pełny dwudzielny K_{2,3}
+    n_x = 2
+    n_y = 3
+    edges = [(i, j) for i in range(n_x) for j in range(n_y)]
+    
+    size, matching = bipartite_matching_labeling(n_x, n_y, edges)
+    
+    print(f"\nGraf K_{{2,3}}: rozmiar skojarzenia = {size}")
+    assert size == 2, "W K_{2,3} maksymalne skojarzenie powinno mieć rozmiar 2"
+    
+    # Sprawdź poprawność skojarzenia
+    used_x = set()
+    used_y = set()
+    for u, v in matching:
+        assert u not in used_x, f"Wierzchołek X {u} użyty więcej niż raz"
+        assert v not in used_y, f"Wierzchołek Y {v} użyty więcej niż raz"
+        assert (u, v) in edges, f"Krawędź ({u}, {v}) nie istnieje w grafie"
+        used_x.add(u)
+        used_y.add(v)
+    
+    print("✓ Bipartite Matching: PASSED")
+
+
 def run_all_tests():
     """Uruchom wszystkie testy"""
     print("=" * 60)
@@ -431,7 +558,10 @@ def run_all_tests():
         test_carlier,
         test_brown_coloring,
         test_dinic,
-        test_circulation_lower_bounds
+        test_circulation_lower_bounds,
+        test_cpm,
+        test_floyd_warshall,
+        test_bipartite_matching
     ]
     
     passed = 0

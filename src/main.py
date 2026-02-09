@@ -125,10 +125,7 @@ def run_weighted_late_jobs():
 
     result = solvers.weighted_late_jobs(p, d, w)
     print_separator()
-    print(f"Maksymalna waga zadań wykonanych o czasie: {result}") 
-    # Uwaga: Oryginalna funkcja w solvers.py zwraca: total_weight - max_weight_on_time
-    # czyli minimalną stratę (wagę spóźnionych).
-    print(f"(Jest to minimalna suma wag zadań spóźnionych).")
+    print(f"Minimalna suma wag zadań spóźnionych: {result}")
 
 def run_moore_hodgson():
     print("\n--- Liczba spóźnionych zadań (Moore-Hodgson) ---")

@@ -1,7 +1,5 @@
 import heapq
-import sys
 from collections import deque, defaultdict
-import math
 
 # ==============================================================================
 # 1. Algorytm McNaughtona (P|pmtn|Cmax)
@@ -85,29 +83,6 @@ def knapsack_dp(weights, values, capacity):
             if val >= v and dp[i - 1][val - v] + w < dp[i][val]:
                 dp[i][val] = dp[i - 1][val - v] + w
                 choice[i][val] = True
-
-    print("\n[DEBUG] Tabela DP (Wiersze: przedmioty, Kolumny: łączna wartość, Komórki: minimalna waga)")
-    # Nagłówek kolumn (wartości)
-    print("      ", end="") 
-    for v in range(max_val + 1):
-        print(f"{v:3}", end=" ")
-    print()
-    print("      " + "----" * (max_val + 1))
-
-    # Wiersze
-    for i in range(n + 1):
-        item_info = "START" if i == 0 else f"P{i}(w={weights[i-1]},v={values[i-1]})"
-        print(f"{i:2} | ", end="") # Indeks przedmiotu
-        for v in range(max_val + 1):
-            val = dp[i][v]
-            if val == float('inf'):
-                print("inf", end=" ")
-            else:
-                # Jeśli waga > pojemność, oznaczamy kolorem lub gwiazdką (opcjonalnie)
-                # Tutaj po prostu wypisujemy wagę
-                print(f"{val:3}", end=" ")
-        print(f"  <- {item_info}")
-    # --------------------------------------------------------
 
     best_val = 0
     for v in range(max_val, -1, -1):
@@ -458,8 +433,6 @@ def list_scheduling(p_times, m):
         task_assignments[machine_id].append(i + 1)
         heapq.heappush(machines, (new_finish_time, machine_id))
         
-    c_max = max(m[0] for m in machines) # Po pętli heap może nie być posortowany idealnie, ale max wyciągniemy
-    # Lepiej:
     c_max = max(item[0] for item in machines)
     return c_max, task_assignments
 
@@ -782,4 +755,32 @@ def bipartite_matching_labeling(n_x, n_y, edges):
         if end_v is None:
             break
             
-        # 2. Powiększ skojarzenie (M
+        # 2. Powiększ skojarzenie (Odtwórz ścieżkę i zaktualizuj skojarzenia)
+        # Odtwarzamy ścieżkę powiększającą od end_v wstecz do wolnego wierzchołka w X
+        path = []
+        current = (end_v, 'Y')
+        while current is not None:
+            path.append(current)
+            current = labels.get(current)
+        
+        # Ścieżka powiększająca ma nieparzystą długość i zaczyna się od wolnego X, kończy na wolnym Y
+        # Krawędzie na nieparzystych pozycjach należą do skojarzenia, na parzystych nie należą
+        # Zamieniamy: usuwamy te należące do M, dodajemy te nie należące do M
+        path.reverse()  # Od wolnego X do wolnego Y
+        
+        # Przechodzimy przez krawędzie w ścieżce i aktualizujemy skojarzenie
+        for i in range(len(path) - 1):
+            node1, side1 = path[i]
+            node2, side2 = path[i + 1]
+            
+            if side1 == 'X' and side2 == 'Y':
+                # Krawędź z X do Y - dodajemy do skojarzenia
+                u, v = node1, node2
+                match_x[u] = v
+                match_y[v] = u
+    
+    # 3. Zwróć wynik
+    size = sum(1 for u in range(n_x) if match_x[u] != -1)
+    matching = [(u, match_x[u]) for u in range(n_x) if match_x[u] != -1]
+    
+    return size, matching

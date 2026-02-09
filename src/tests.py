@@ -418,24 +418,29 @@ def test_cpm():
     print("\n=== TEST: Critical Path Method (CPM) ===")
     
     # Test: Przykład projektu z 6 zadaniami
-    # Zadania: 0-1 (d=3), 0-2 (d=2), 1-3 (d=4), 2-3 (d=1), 2-4 (d=5), 3-5 (d=2), 4-5 (d=3)
     n = 6  # wierzchołki 0..5
-    durations = [0, 3, 2, 4, 1, 5, 2, 3]  # czas trwania dla każdej krawędzi
+    durations = [3, 2, 4, 1, 5, 2]  # czas trwania dla każdego wierzchołka
     edges = [(0, 1), (0, 2), (1, 3), (2, 3), (2, 4), (3, 5), (4, 5)]
     
-    project_duration, critical_path = cpm(n, durations, edges)
+    es, ls, project_duration = cpm(n, durations, edges)
     
     print(f"Liczba zadań: {n}")
+    print(f"Czasy trwania: {durations}")
     print(f"Krawędzie: {edges}")
     print(f"Czas trwania projektu: {project_duration}")
-    print(f"Ścieżka krytyczna: {critical_path}")
+    print(f"ES (Earliest Start): {es}")
+    print(f"LS (Latest Start): {ls}")
     
     # Czas projektu powinien być >= 0
     assert project_duration >= 0, "Czas projektu nie może być ujemny"
     
-    # Ścieżka krytyczna powinna zaczynać się od 0 i kończyć na ostatnim wierzchołku
-    if critical_path:
-        assert critical_path[0] == 0, "Ścieżka powinna zaczynać się od wierzchołka 0"
+    # ES powinno być <= LS dla każdego zadania
+    for i in range(n):
+        assert es[i] <= ls[i] + 1e-6, f"ES[{i}] > LS[{i}]"
+    
+    # Ścieżka krytyczna to zadania gdzie ES == LS
+    critical_tasks = [i for i in range(n) if abs(es[i] - ls[i]) < 1e-6]
+    print(f"Zadania krytyczne: {critical_tasks}")
     
     print("✓ CPM: PASSED")
 
